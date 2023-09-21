@@ -95,20 +95,6 @@ class VkApiAccessor(BaseAccessor):
                         text=u['object']['message']['text'],
                         id=u['object']['message']['id']))) for u in data["updates"] if u['type'] == 'message_new'
         ]
-            # raw_updates = data.get("updates", [])
-            # updates = []
-            # for update in raw_updates:
-            #     updates.append(
-            #         Update(
-            #             type=update["type"],
-            #             object=UpdateObject(
-            #                 id=update["object"]["id"],
-            #                 user_id=update["object"]["user_id"],
-            #                 body=update["object"]["body"],
-            #             ),
-            #         )
-            #     )
-            # await self.app.store.bots_manager.handle_updates(updates)
 
     async def send_message(self, group: bool, message: Message) -> None:
         params = {
