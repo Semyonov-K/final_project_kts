@@ -32,13 +32,13 @@ class StockExchangeAccessor(BaseAccessor):
             
 
 
-    async def get_game_score(self, vk_id: int) -> Optional[GameScore]:
-        async with self.app.database.session() as session:
-            query = select(GameScoreModel).where(GameScoreModel.vk_id==vk_id)
-            result = await session.execute(query)
-            game_score = result.scalars().first()
-            if game_score:
-                return game_score.get_object()
+    # async def get_game_score(self, vk_id: int) -> Optional[GameScore]:
+    #     async with self.app.database.session() as session:
+    #         query = select(GameScoreModel).where(GameScoreModel.vk_id==vk_id)
+    #         result = await session.execute(query)
+    #         game_score = result.scalars().first()
+    #         if game_score:
+    #             return game_score.get_object()
 
 
     async def create_stock(self, name: str, price: Optional[int]=1000) -> Stock:

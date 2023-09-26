@@ -45,6 +45,7 @@ class GameScoreModel(db):
     total_score = Column(Integer, default=0)
     total_games = Column(Integer, default=0)
     total_win = Column(Integer, default=0)
+    current_score = Column(Integer, default=0)
     vk_id = Column(Integer, ForeignKey('user.vk_id'))
     # user = relationship("UserModel", backref="game_score", uselist=False)
 
@@ -91,7 +92,7 @@ class Game:
 class GameModel(db):
     chat_id = Column(Integer, primary_key=True)
     users = relationship("UserModel")
-    number_of_moves = Column(Integer, default=10, nullable=False)
+    number_of_moves = Column(Integer, default=10)
     stocks = relationship("StockModel")
 
     def get_object(self) -> Game:
