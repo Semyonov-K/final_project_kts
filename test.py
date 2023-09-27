@@ -4,3 +4,57 @@ y = x[0]
 z = y['object']
 xyz = z['message']
 print(xyz["from_id"])
+#    async def send_message(self, group: bool, message: Message) -> None:
+#         params = {
+#                 "random_id": random.randint(1, 2**32),
+#                 "message": message.text,
+#                 "access_token": self.app.config.bot.token,
+#                 "keyboard": {
+#                     "inline": true,
+#                     "buttons": [
+#                                     [
+#                                         {
+#                                             "action": {
+#                                                 "type": "text",
+#                                                 "label": "Я КрОсавчег"
+#                                             }, 
+#                                             "color": "primary"
+#                                         },
+#                                         {
+#                                             "action": {
+#                                                 "type": "text",
+#                                                 "label": "Я обычный"
+#                                             },
+#                                             "color": "secondary"
+#                                         },
+#                                         {
+#                                             "action": {
+#                                                 "type": "text",
+#                                                 "label": "Я работаю"
+#                                             },
+#                                             "color": "positive"
+#                                         },
+#                                         {
+#                                             "action": {
+#                                                 "type": "text",
+#                                                 "label": "Я не работаю"
+#                                             },
+#                                             "color": "negative"
+#                                         }
+#                                     ]
+#                                 ]
+#                 }
+#         }
+#         if group is False:
+#             params["user_id"] = message.user_id
+#         else:
+#             params["peer_id"] = message.peer_id
+
+#         query = self._build_query(
+#                 host=API_PATH,
+#                 method="messages.send",
+#                 params=params,
+#             )
+#         async with self.session.get(query) as response:
+#             data = await response.json()
+#             self.logger.info(data)

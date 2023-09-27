@@ -24,11 +24,20 @@ class StockExchangeAccessor(BaseAccessor):
 
     async def get_user_by_vk_id(self, vk_id: int) -> Optional[User]:
         async with self.app.database.session() as session:
-            query = select(UserModel).where(UserModel.vk_id==vk_id)
-            result = await session.execute(query)
+            query_user = select(UserModel).where(UserModel.vk_id==vk_id)
+            result = await session.execute(query_user)
             user = result.scalars().first()
             if user:
                 return user.get_object()
+
+
+    async def get_score_user_by_vk_id(self, vk_id: int) -> Optional[GameScore]:
+        async with self.app.database.session() as session:
+            query_score = select(GameScoreModel).where(GameScoreModel.vk_id==vk_id)
+            result = await session.execute(query_score)
+            score = result.scalars().first()
+            if score:
+                return score.get_object()
             
 
 
@@ -53,8 +62,8 @@ class StockExchangeAccessor(BaseAccessor):
 
     async def get_stock(self, stock_id: int) -> Optional[Stock]:
         async with self.app.database.session() as session:
-            query = select(StockModel).where(StockModel.stock_id==stock_id)
-            result = await session.execute(query)
+            query_stock = select(StockModel).where(StockModel.stock_id==stock_id)
+            result = await session.execute(query_stock)
             stock = result.scalars().first()
             if stock:
                 return stock.get_object()
@@ -72,10 +81,20 @@ class StockExchangeAccessor(BaseAccessor):
             return game.get_object()
 
 
-    async def get_game(self, chat_id) -> Optional[Game]:
+    async def get_game(self, chat_id: int) -> Optional[Game]:
         async with self.app.database.session() as session:
-            query = select(GameModel).where(GameModel.chat_id==chat_id)
-            result = await session.execute(query)
+            query_game = select(GameModel).where(GameModel.chat_id==chat_id)
+            result = await session.execute(query_game)
             game = result.scalars().first()
             if game:
                 return game.get_object()
+    
+
+    async def update_game(
+        self,
+        chat_id: int,
+        list_users: Optional[list[User]],
+        list_stocks: Optional[list[Stock]]=None
+    ) -> Game:
+        async with self.app.database.session() as session:
+            query_game = select(GameModel).where(GameModel.chat_id==chat_id)

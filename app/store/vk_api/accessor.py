@@ -8,6 +8,7 @@ from aiohttp.client import ClientSession
 from app.base.base_accessor import BaseAccessor
 from app.store.vk_api.dataclasses import Message, Update, UpdateObject, UpdateMessage
 from app.store.vk_api.poller import Poller
+from app.store.vk_api.keyboard import INLINE_BUTTON, BUTTON
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -85,7 +86,7 @@ class VkApiAccessor(BaseAccessor):
             self.logger.info(data)
             self.ts = data["ts"]
         
-        return [
+        new_update = [
             Update(
                 type=u['type'],
                 object=UpdateObject(
@@ -95,13 +96,15 @@ class VkApiAccessor(BaseAccessor):
                         text=u['object']['message']['text'],
                         id=u['object']['message']['id']))) for u in data["updates"] if u['type'] == 'message_new'
         ]
+        return new_update
 
-    async def send_message(self, group: bool, message: Message) -> None:
+    async def send_message(self, group: bool, message: Message, keyboard: Optional[str]=None) -> None:
         params = {
                 "random_id": random.randint(1, 2**32),
                 "message": message.text,
                 "access_token": self.app.config.bot.token,
-            }
+                "keyboard": keyboard
+        }
         if group is False:
             params["user_id"] = message.user_id
         else:

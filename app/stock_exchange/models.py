@@ -16,16 +16,12 @@ class UserModel(db):
     __tablename__ = 'user'
 
     vk_id = Column(Integer, primary_key=True)
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
     game_score = relationship("GameScoreModel", uselist=False, backref="user")
     # game_score_id = Column(Integer, ForeignKey('game_score.score_id', ondelete="CASCADE"), nullable=False)
 
     def get_object(self) -> User:
         return User(
-            vk_id=self.vk_id,
-            first_name=self.first_name,
-            last_name=self.last_name
+            vk_id=self.vk_id
         )
 
 
@@ -83,6 +79,7 @@ class StockModel(db):
 
 @dataclass
 class Game:
+    game_id: int
     chat_id: int
     users: list[User]
     number_of_moves: int
@@ -90,13 +87,17 @@ class Game:
 
 
 class GameModel(db):
-    chat_id = Column(Integer, primary_key=True)
+    __tablename__ = "game"
+
+    game_id = Column(Integer, primary_key=True)
+    chat_id = Column(Integer)
     users = relationship("UserModel")
     number_of_moves = Column(Integer, default=10)
     stocks = relationship("StockModel")
 
     def get_object(self) -> Game:
         return Game(
+            game_id=self.game_id,
             chat_id=self.chat_id,
             users=[user.get_object() for user in self.users],
             number_of_moves=self.number_of_moves,

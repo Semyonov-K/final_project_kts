@@ -1,0 +1,3 @@
+BUTTON  = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "Моя статистика"}, "color": "primary"}, {"action": {"type": "text", "label": "Правила игры"}, "color": "secondary"}],[{"action": {"type": "text", "label": "Старт игры!"}, "color": "positive"}]]}'
+INLINE_BUTTON = '{"inline": true, "buttons": [[{"action": {"type": "text", "label": "Я играю"}, "color": "positive"}, {"action": {"type": "text", "label": "Я не играю"}, "color": "negative"}]]}'
+BUTTON_IN_GAME  = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "Моя статистика"}, "color": "primary"}, {"action": {"type": "text", "label": "Правила игры"}, "color": "secondary"}]]}'
