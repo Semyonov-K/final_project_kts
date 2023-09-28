@@ -6,7 +6,7 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession
 
 from app.base.base_accessor import BaseAccessor
-from app.store.vk_api.dataclasses import Message, Update, UpdateObject, UpdateMessage
+from app.store.vk_api.dataclasses import Message, Update, UpdateObject, UpdateMessage, UpdateEvent, UpdateEventMessage, UpdateEventObject
 from app.store.vk_api.poller import Poller
 from app.store.vk_api.keyboard import INLINE_BUTTON, BUTTON
 
@@ -86,16 +86,34 @@ class VkApiAccessor(BaseAccessor):
             self.logger.info(data)
             self.ts = data["ts"]
         
-        new_update = [
-            Update(
-                type=u['type'],
-                object=UpdateObject(
-                    message=UpdateMessage(
-                        peer_id=u['object']['message']['peer_id'],
-                        from_id=u['object']['message']['from_id'],
-                        text=u['object']['message']['text'],
-                        id=u['object']['message']['id']))) for u in data["updates"] if u['type'] == 'message_new'
-        ]
+        new_update = []
+        for u in data["updates"]:
+            if u['type'] == 'message_new':
+                new_update.append(
+                    Update(
+                        type=u['type'],
+                        object=UpdateObject(
+                            message=UpdateMessage(
+                                peer_id=u['object']['message']['peer_id'],
+                                from_id=u['object']['message']['from_id'],
+                                text=u['object']['message']['text'],
+                                id=u['object']['message']['id']
+                            )
+                        )
+                    )
+                )
+            if u['type'] == 'message_event':
+                new_update.append(
+                    UpdateEvent(
+                        type=u['type'],
+                        object=UpdateObject(
+                            message=UpdateEventMessage(
+                                user_id=u["object"]["user_id"],
+                                event_id=u["object"]["event_id"]
+                            )
+                        )
+                    )
+                )
         return new_update
 
     async def send_message(self, group: bool, message: Message, keyboard: Optional[str]=None) -> None:

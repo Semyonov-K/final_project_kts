@@ -26,3 +26,20 @@ class UpdateObject:
 class Update:
     type: str
     object: UpdateObject
+
+
+@dataclass
+class UpdateEventMessage:
+    user_id: int
+    event_id: str
+
+
+@dataclass
+class UpdateEventObject:
+    message: UpdateEventMessage
+
+
+@dataclass
+class UpdateEvent:
+    type: str
+    object: UpdateEventObject
