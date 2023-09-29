@@ -8,7 +8,6 @@ from aiohttp.client import ClientSession
 from app.base.base_accessor import BaseAccessor
 from app.store.vk_api.dataclasses import Message, Update, UpdateObject, UpdateMessage, UpdateEvent, UpdateEventMessage, UpdateEventObject
 from app.store.vk_api.poller import Poller
-from app.store.vk_api.keyboard import INLINE_BUTTON, BUTTON
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -106,10 +105,12 @@ class VkApiAccessor(BaseAccessor):
                 new_update.append(
                     UpdateEvent(
                         type=u['type'],
-                        object=UpdateObject(
-                            message=UpdateEventMessage(
+                        event_object=UpdateEventObject(
+                            event_message=UpdateEventMessage(
                                 user_id=u["object"]["user_id"],
-                                event_id=u["object"]["event_id"]
+                                event_id=u["object"]["event_id"],
+                                payload=u["object"]["payload"],
+                                peer_id=u["object"]["peer_id"]
                             )
                         )
                     )
@@ -133,6 +134,23 @@ class VkApiAccessor(BaseAccessor):
                 method="messages.send",
                 params=params,
             )
+        async with self.session.get(query) as response:
+            data = await response.json()
+            self.logger.info(data)
+
+    async def send_event_message(self, event_id: str, user_id: int, peer_id: int, event_data: str) -> None:
+        params = {
+                "event_id": event_id,
+                "user_id": user_id,
+                "peer_id": peer_id,
+                "event_data": event_data,
+                "access_token": self.app.config.bot.token
+        }
+        query = self._build_query(
+                host=API_PATH,
+                method="messages.sendMessageEventAnswer",
+                params=params,
+        )
         async with self.session.get(query) as response:
             data = await response.json()
             self.logger.info(data)

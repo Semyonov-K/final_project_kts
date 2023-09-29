@@ -32,14 +32,16 @@ class Update:
 class UpdateEventMessage:
     user_id: int
     event_id: str
+    payload: str
+    peer_id: int
 
 
 @dataclass
 class UpdateEventObject:
-    message: UpdateEventMessage
+    event_message: UpdateEventMessage
 
 
 @dataclass
 class UpdateEvent:
     type: str
-    object: UpdateEventObject
+    event_object: UpdateEventObject

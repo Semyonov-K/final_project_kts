@@ -4,8 +4,9 @@ from logging import getLogger
 
 from app.store.vk_api.dataclasses import Message, Update
 from app.store.stock_exchange.accessor import StockExchangeAccessor as sea
-from app.store.bot.text import RULES_OF_GAME, START_GAME
-from app.store.vk_api.keyboard import BUTTON, INLINE_BUTTON, BUTTON_IN_GAME, BUTTON_PREGAME
+from app.store.bot.text import RULES_OF_GAME, START_GAME, SHOWBAR_INPLAY
+from app.store.vk_api.keyboard import BUTTON, BUTTON_IN_GAME, BUTTON_PREGAME
+from app.store.vk_api.dataclasses import UpdateEvent
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -19,7 +20,7 @@ class BotManager:
         self.app = app
         self.bot = None
         self.logger = getLogger("handler")
-        self.game = False
+        self.start_bot = False
         self.pregame_ = False
         self.timer_ = None
         self.list_user = []
@@ -48,7 +49,6 @@ class BotManager:
             await self.pregame(updates)
         for update in updates:
             if update.type == "message_event":
-                print("Я справился")
                 continue
             text = update.object.message.text
             from_id = update.object.message.from_id
@@ -60,29 +60,33 @@ class BotManager:
                 continue
             group = True
             if text == "Старт бота":
-                if self.game is False:
+                if self.start_bot is False:
                     text_msg="Здравствуйте, давайте поиграем?"
                     keyboard = BUTTON
                     await self.sendler(peer_id, from_id, text_msg, group, keyboard)
             if text == "[club222363225|@club222363225] Правила игры":
                 text_msg=RULES_OF_GAME
                 keyboard = BUTTON
-                if self.game is True:
+                if self.start_bot is True and self.pregame_ is False:
                     keyboard = BUTTON_IN_GAME
+                if self.start_bot is True and self.pregame_ is True:
+                    keyboard = BUTTON_PREGAME
                 await self.sendler(peer_id, from_id, text_msg, group, keyboard)
             if text == '[club222363225|@club222363225] Моя статистика':
                 stats = await sea.get_score_user_by_vk_id(self, vk_id=from_id)
                 keyboard = BUTTON
-                if self.game is True:
+                if self.start_bot is True and self.pregame_ is False:
                     keyboard = BUTTON_IN_GAME
+                if self.start_bot is True and self.pregame_ is True:
+                    keyboard = BUTTON_PREGAME
                 if stats is None:
                     text_msg="У вас пока нет статистики :("
                     await self.sendler(peer_id, from_id, text_msg, group, keyboard)
                 else:
                     await self.sendler(peer_id, from_id, stats, group, keyboard)
             if text == "[club222363225|@club222363225] Старт игры!":
-                if self.game is False:
-                    self.game = True
+                if self.start_bot is False:
+                    self.start_bot = True
                     group = True
                     text_msg=START_GAME
                     await self.sendler(peer_id, from_id, text_msg, group, BUTTON_PREGAME)
@@ -91,18 +95,31 @@ class BotManager:
 
 
     async def pregame(self, updates: list[Update]):
-        if self.timer_ == "done":
-            await self.start_game(updates)
         for update in updates:
-            if update.type == "message_event":
-                print("Я справился")
-                continue
-            text = update.object.message.text
-            from_id = update.object.message.from_id
-            if text == "[club222363225|@club222363225] Я играю":
-                self.list_user.append(from_id)
+            if self.timer_ == "done":
+                #     await self.sendler(peer_id, from_id, text_msg, group, BUTTON_PREGAME)
+                    await self.game(updates)
 
+            if isinstance(update, UpdateEvent):
+                payload = update.event_object.event_message.payload
+                if payload["command"] == "iplay":
+                    peer_id = update.event_object.event_message.peer_id
+                    user_id = update.event_object.event_message.user_id
+                    event_id = update.event_object.event_message.event_id
+                    self.list_user.append(user_id)
+                    await self.app.store.vk_api.send_event_message(
+                        event_id=event_id,
+                        peer_id=peer_id,
+                        user_id=user_id,
+                        event_data=SHOWBAR_INPLAY
+                    )
+
+
+            # text = update.object.message.text
+            # from_id = update.object.message.from_id
+            # if text == "[club222363225|@club222363225] Я играю":
+            #     self.list_user.append(from_id)
     
 
-    async def start_game(self, updates):
+    async def game(self, updates):
         print(self.list_user)
