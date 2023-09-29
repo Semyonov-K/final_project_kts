@@ -8,50 +8,58 @@ from sqlalchemy.orm import relationship
 @dataclass
 class User:
     vk_id: int
-    first_name: str
-    last_name: str
+    score: int
+    stock_one: int
+    stock_two: int
+    stock_three: int
 
 
 class UserModel(db):
     __tablename__ = 'user'
 
     vk_id = Column(Integer, primary_key=True)
-    game_score = relationship("GameScoreModel", uselist=False, backref="user")
-    # game_score_id = Column(Integer, ForeignKey('game_score.score_id', ondelete="CASCADE"), nullable=False)
+    score = Column(Integer)
+    stock_one = Column(Integer, default=0)
+    stock_two = Column(Integer, default=0)
+    stock_three = Column(Integer, default=0)
+    game_user_id = Column(BigInteger, ForeignKey("game.game_id", ondelete="CASCADE"))
 
     def get_object(self) -> User:
         return User(
-            vk_id=self.vk_id
+            vk_id=self.vk_id,
+            score=self.score,
+            stock_one=self.stock_one,
+            stock_two=self.stock_two,
+            stock_three=self.stock_three
         )
 
 
 @dataclass
 class GameScore:
     score_id: int
+    vk_id: int
     total_score: int
     total_games: int
     total_win: int
-    vk_id: User
 
 
 class GameScoreModel(db):
     __tablename__ = 'game_score'
 
     score_id = Column(Integer, primary_key=True)
+    vk_id = Column(Integer)
     total_score = Column(Integer, default=0)
     total_games = Column(Integer, default=0)
     total_win = Column(Integer, default=0)
-    current_score = Column(Integer, default=0)
-    vk_id = Column(Integer, ForeignKey('user.vk_id'))
-    # user = relationship("UserModel", backref="game_score", uselist=False)
+
 
     def get_object(self) -> GameScore:
         return GameScore(
             score_id=self.score_id,
+            vk_id=self.vk_id,
             total_score=self.total_score,
             total_games=self.total_games,
             total_win=self.total_win,
-            vk_id=self.vk_id.vk_id # Здесь возможна ошибка?
         )
 
 
@@ -83,7 +91,6 @@ class Game:
     chat_id: int
     users: list[User]
     number_of_moves: int
-    stocks: list[Stock]
 
 
 class GameModel(db):
@@ -92,8 +99,7 @@ class GameModel(db):
     game_id = Column(Integer, primary_key=True)
     chat_id = Column(Integer)
     users = relationship("UserModel")
-    number_of_moves = Column(Integer, default=10)
-    stocks = relationship("StockModel")
+    number_of_moves = Column(Integer, default=1)
 
     def get_object(self) -> Game:
         return Game(
@@ -101,5 +107,4 @@ class GameModel(db):
             chat_id=self.chat_id,
             users=[user.get_object() for user in self.users],
             number_of_moves=self.number_of_moves,
-            stocks=[stock.get_object() for stock in self.stocks]
         )

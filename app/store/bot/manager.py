@@ -18,11 +18,13 @@ TIME_OF_BIG_TIMER = 10
 class BotManager:
     def __init__(self, app: "Application"):
         self.app = app
+        self.group = None
         self.bot = None
         self.logger = getLogger("handler")
         self.start_bot = False
         self.pregame_ = False
         self.timer_ = None
+        self.game_ = False
         self.list_user = []
 
 
@@ -31,6 +33,11 @@ class BotManager:
         await asyncio.sleep(timer)
         self.timer_ = "done"
         print("end timer")
+        group = True
+        text_msg = 'Время закончилось! Идет формирование списка игроков.'
+        peer_id = self.group
+        from_id = peer_id
+        await self.sendler(peer_id, from_id, text_msg, group, BUTTON_IN_GAME)
 
 
     async def sendler(self, peer_id: int, from_id: int, text: str, group: bool, keyboard: str):
@@ -45,6 +52,13 @@ class BotManager:
                 )
     
     async def start_menu(self, updates: list[Update]):
+        if self.game_ is True:
+            await self.game(updates)
+        if self.timer_ == 'done':
+            self.timer_ = None
+            self.pregame_ = False
+            self.game_ = True
+            await self.game(updates)
         if self.pregame_ is True:
             await self.pregame(updates)
         for update in updates:
@@ -71,6 +85,7 @@ class BotManager:
                     keyboard = BUTTON_IN_GAME
                 if self.start_bot is True and self.pregame_ is True:
                     keyboard = BUTTON_PREGAME
+                
                 await self.sendler(peer_id, from_id, text_msg, group, keyboard)
             if text == '[club222363225|@club222363225] Моя статистика':
                 stats = await sea.get_score_user_by_vk_id(self, vk_id=from_id)
@@ -86,6 +101,7 @@ class BotManager:
                     await self.sendler(peer_id, from_id, stats, group, keyboard)
             if text == "[club222363225|@club222363225] Старт игры!":
                 if self.start_bot is False:
+                    self.group = peer_id
                     self.start_bot = True
                     group = True
                     text_msg=START_GAME
@@ -96,16 +112,12 @@ class BotManager:
 
     async def pregame(self, updates: list[Update]):
         for update in updates:
-            if self.timer_ == "done":
-                #     await self.sendler(peer_id, from_id, text_msg, group, BUTTON_PREGAME)
-                    await self.game(updates)
-
             if isinstance(update, UpdateEvent):
                 payload = update.event_object.event_message.payload
+                peer_id = update.event_object.event_message.peer_id
+                user_id = update.event_object.event_message.user_id
+                event_id = update.event_object.event_message.event_id
                 if payload["command"] == "iplay":
-                    peer_id = update.event_object.event_message.peer_id
-                    user_id = update.event_object.event_message.user_id
-                    event_id = update.event_object.event_message.event_id
                     self.list_user.append(user_id)
                     await self.app.store.vk_api.send_event_message(
                         event_id=event_id,
@@ -114,12 +126,12 @@ class BotManager:
                         event_data=SHOWBAR_INPLAY
                     )
 
+    async def game(self, model_of_game, updates):
+        group = True
+        text_msg = 'Игра началась!'
+        peer_id = self.group
+        from_id = peer_id
+        await self.sendler(peer_id, from_id, text_msg, group, BUTTON_IN_GAME)
+        users = list(set(self.list_user))
 
-            # text = update.object.message.text
-            # from_id = update.object.message.from_id
-            # if text == "[club222363225|@club222363225] Я играю":
-            #     self.list_user.append(from_id)
-    
-
-    async def game(self, updates):
-        print(self.list_user)
+        

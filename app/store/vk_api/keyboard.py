@@ -2,3 +2,4 @@ BUTTON  = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "
 # INLINE_BUTTON = '{"inline": true, "buttons": [[{"action": {"type": "callback", "label": "Я играю"}, "color": "positive"}, {"action": {"type": "callback", "label": "Я не играю"}, "color": "negative"}]]}'
 BUTTON_IN_GAME  = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "Моя статистика"}, "color": "primary"}, {"action": {"type": "text", "label": "Правила игры"}, "color": "secondary"}]]}'
 BUTTON_PREGAME = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "Моя статистика"}, "color": "primary"}, {"action": {"type": "text", "label": "Правила игры"}, "color": "secondary"}], [{"action": {"type": "callback", "payload": "{\\"command\\": \\"iplay\\"}", "label": "Я играю"}, "color": "positive"}]]}'
+NO_KEYBOARD = '{"buttons":[],"one_time":true}'
