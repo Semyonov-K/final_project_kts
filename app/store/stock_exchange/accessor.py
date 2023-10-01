@@ -11,12 +11,11 @@ from app.stock_exchange.models import (
 
 
 class StockExchangeAccessor(BaseAccessor):
-    async def create_user(self, vk_id: int, first_name: str, last_name: str) -> User:
+    async def create_user(self, vk_id: int) -> User:
         async with self.app.database.session() as session:
             user = UserModel(
-                vk_id=vk_id,
-                first_name=first_name,
-                last_name=last_name)
+                vk_id=vk_id
+            )
             session.add(user)
             await session.commit()
             return user.get_object()
@@ -31,23 +30,15 @@ class StockExchangeAccessor(BaseAccessor):
                 return user.get_object()
 
 
-    async def get_score_user_by_vk_id(self, vk_id: int) -> Optional[GameScore]:
+    async def get_gamescore_user_by_vk_id(self, vk_id: int) -> Optional[GameScore]:
         async with self.app.database.session() as session:
-            query_score = select(GameScoreModel).where(GameScoreModel.vk_id==vk_id)
-            result = await session.execute(query_score)
-            score = result.scalars().first()
-            if score:
-                return score.get_object()
-            
-
-
-    # async def get_game_score(self, vk_id: int) -> Optional[GameScore]:
-    #     async with self.app.database.session() as session:
-    #         query = select(GameScoreModel).where(GameScoreModel.vk_id==vk_id)
-    #         result = await session.execute(query)
-    #         game_score = result.scalars().first()
-    #         if game_score:
-    #             return game_score.get_object()
+            query_gamescore = select(GameScoreModel).where(GameScoreModel.vk_id==vk_id)
+            result = await session.execute(query_gamescore)
+            gamescore = result.scalars().first()
+            if gamescore:
+                return gamescore.get_object()
+            else:
+                return None
 
 
     async def create_stock(self, name: str, price: Optional[int]=1000) -> Stock:
@@ -67,15 +58,15 @@ class StockExchangeAccessor(BaseAccessor):
             stock = result.scalars().first()
             if stock:
                 return stock.get_object()
+            else:
+                return None
 
 
     async def create_game(
-        self, chat_id: int, list_users: list[User], list_stocks: list[Stock]
+        self, chat_id: int,
     ) -> Game:
         async with self.app.database.session() as session:
             game = GameModel(chat_id=chat_id)
-            game.users.extend(list_users)
-            game.stocks.extend(list_stocks)
             session.add(game)
             await session.commit()
             return game.get_object()
@@ -88,13 +79,26 @@ class StockExchangeAccessor(BaseAccessor):
             game = result.scalars().first()
             if game:
                 return game.get_object()
+            else:
+                return None
     
 
     async def update_game(
-        self,
-        chat_id: int,
-        list_users: Optional[list[User]],
-        list_stocks: Optional[list[Stock]]=None
-    ) -> Game:
+            self,
+            chat_id: int,
+            user: Optional[User],
+            stock: Optional[Stock]
+        ) -> Optional[Game]:
         async with self.app.database.session() as session:
             query_game = select(GameModel).where(GameModel.chat_id==chat_id)
+            result = await session.execute(query_game)
+            game = result.scalars().first()
+            if game:
+                if user:
+                    game.users.append(user)
+                if stock:
+                    game.stock.append(stock)
+                await session.commit()
+                return game.get_object()
+            else:
+                return None

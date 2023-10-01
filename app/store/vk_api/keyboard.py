@@ -3,3 +3,5 @@ BUTTON  = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "
 BUTTON_IN_GAME  = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "Моя статистика"}, "color": "primary"}, {"action": {"type": "text", "label": "Правила игры"}, "color": "secondary"}]]}'
 BUTTON_PREGAME = '{"inline": false, "buttons": [[{"action": {"type": "text", "label": "Моя статистика"}, "color": "primary"}, {"action": {"type": "text", "label": "Правила игры"}, "color": "secondary"}], [{"action": {"type": "callback", "payload": "{\\"command\\": \\"iplay\\"}", "label": "Я играю"}, "color": "positive"}]]}'
 NO_KEYBOARD = '{"buttons":[],"one_time":true}'
+SHOWBAR_INPLAY = '{"type": "show_snackbar", "text": "Вы в игре! Ожидаем остальных участников."}'
+SHOWBAR_ALREADY_ADD = '{"type": "show_snackbar", "text": "Вы уже добавлены в игру."}'

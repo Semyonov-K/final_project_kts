@@ -96,3 +96,6 @@ x = 1
 for i in range(10):
     x = i
 print(x)
+
+x = [1, 2, 3151515]
+print(len(x))

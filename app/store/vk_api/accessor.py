@@ -117,18 +117,14 @@ class VkApiAccessor(BaseAccessor):
                 )
         return new_update
 
-    async def send_message(self, group: bool, message: Message, keyboard: Optional[str]=None) -> None:
+    async def send_message(self, peer_id: int, message: Message, keyboard: Optional[str]=None) -> None:
         params = {
                 "random_id": random.randint(1, 2**32),
-                "message": message.text,
                 "access_token": self.app.config.bot.token,
+                "peer_id": peer_id,
+                "message": message.text,
                 "keyboard": keyboard
         }
-        if group is False:
-            params["user_id"] = message.user_id
-        else:
-            params["peer_id"] = message.peer_id
-
         query = self._build_query(
                 host=API_PATH,
                 method="messages.send",
