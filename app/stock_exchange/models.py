@@ -12,6 +12,12 @@ class User:
     stock_one: int
     stock_two: int
     stock_three: int
+    stock_one_sell: int
+    stock_two_sell: int
+    stock_three_sell: int
+    stock_one_buy: int
+    stock_two_buy: int
+    stock_three_buy: int
 
 
 class UserModel(db):
@@ -22,6 +28,12 @@ class UserModel(db):
     stock_one = Column(Integer, default=0)
     stock_two = Column(Integer, default=0)
     stock_three = Column(Integer, default=0)
+    stock_one_buy = Column(Integer, default=0)
+    stock_two_buy = Column(Integer, default=0)
+    stock_three_buy = Column(Integer, default=0)
+    stock_one_sell = Column(Integer, default=0)
+    stock_two_sell = Column(Integer, default=0)
+    stock_three_sell = Column(Integer, default=0)
     game_user_id = Column(BigInteger, ForeignKey("game.game_id", ondelete="CASCADE"))
 
     def get_object(self) -> User:
@@ -30,7 +42,13 @@ class UserModel(db):
             score=self.score,
             stock_one=self.stock_one,
             stock_two=self.stock_two,
-            stock_three=self.stock_three
+            stock_three=self.stock_three,
+            stock_one_sell=self.stock_one_sell,
+            stock_two_sell=self.stock_two_sell,
+            stock_three_sell=self.stock_three_sell,
+            stock_one_buy=self.stock_one_buy,
+            stock_two_buy=self.stock_two_buy,
+            stock_three_buy=self.stock_three_buy
         )
 
 

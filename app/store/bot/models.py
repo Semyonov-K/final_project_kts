@@ -12,6 +12,7 @@ class Chat:
     pregame: bool
     timer: str
     game: bool
+    endgame: bool
 
 
 class ChatModel(db):
@@ -22,6 +23,7 @@ class ChatModel(db):
     pregame = Column(Boolean, default=False)
     timer = Column(String, default='None')
     game = Column(Boolean, default=False)
+    endgame = Column(Boolean, default=False)
 
     def get_object(self) -> Chat:
         return Chat(
@@ -29,6 +31,7 @@ class ChatModel(db):
             start_game=self.start_game,
             pregame=self.pregame,
             timer=self.timer,
-            game=self.game
+            game=self.game,
+            endgame=self.endgame
         )
 

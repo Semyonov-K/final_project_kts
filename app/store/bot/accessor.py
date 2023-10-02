@@ -35,6 +35,7 @@ class ChatModelAccessor(BaseAccessor):
                 chat.pregame = new_chat.pregame
                 chat.timer = new_chat.timer
                 chat.game = new_chat.game
+                chat.endgame = new_chat.endgame
                 await session.commit()
                 return chat.get_object()
             else:
