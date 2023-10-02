@@ -7,7 +7,7 @@ from app.store.database.sqlalchemy_base import db
 if TYPE_CHECKING:
     from app.web.app import Application
 
-DATABASE_URL = 'postgresql+asyncpg://kts_user:kts_pass@localhost:5432/postgres'
+DATABASE_URL = 'postgresql+asyncpg://kts_user:kts_pass@localhost:5433/postgres'
 
 
 class Database:

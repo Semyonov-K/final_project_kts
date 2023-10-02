@@ -37,7 +37,7 @@ class BotManager:
                 peer_id = update.event_object.event_message.peer_id
             if isinstance(update, Update):
                 peer_id = update.object.message.peer_id
-            chat = await CMA.get_chat_by_chat_id(chat_id=peer_id)
+            chat = await CMA.get_chat_by_chat_id(CMA, chat_id=peer_id)
             if chat:
                 await self.handler_lock(chat=chat, updates=updates)
             if chat is None:
@@ -106,7 +106,7 @@ class BotManager:
                 peer_id = update.event_object.event_message.peer_id
                 user_id = update.event_object.event_message.user_id
                 event_id = update.event_object.event_message.event_id
-                user = SEA.get_user_by_vk_id(vk_id=user_id)
+                user = await SEA.get_user_by_vk_id(vk_id=user_id)
                 if payload["command"] == "stock_one":
                     SHOWBAR_STOCK = SHOWBAR_COUNT_STOCK
                     SHOWBAR_STOCK.replace("У вас 0 акции!", f"У вас {user.stock_one} акции")
@@ -376,7 +376,7 @@ class BotManager:
             if len(game.users) == len(in_memory_for_skipped[game.game_id]):
                 text_msg = "Все игроки проголосовали за конец сессии! Идет завершение сессии."
                 await self.sendler(chat.chat_id, chat.chat_id, text_msg, BUTTON_IN_GAME_WITH_STOCKS)
-                # НУЖНО РЕАЛИЗОВАТЬ ДО КОНЦА!
+
             if isinstance(update, UpdateEvent):
                 payload = update.event_object.event_message.payload
                 peer_id = update.event_object.event_message.peer_id
