@@ -117,7 +117,7 @@ class VkApiAccessor(BaseAccessor):
                 )
         return new_update
 
-    async def send_message(self, peer_id: int, message: Message, keyboard: Optional[str]=None) -> None:
+    async def send_message(self, peer_id: int, message: Message, keyboard: Optional[None]) -> None:
         params = {
                 "random_id": random.randint(1, 2**32),
                 "access_token": self.app.config.bot.token,

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 from app.store.database.sqlalchemy_base import db
 from sqlalchemy import Column, BigInteger, String, ForeignKey, Boolean, Integer
 from sqlalchemy.orm import relationship

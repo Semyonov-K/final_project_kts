@@ -11,7 +11,7 @@ class BaseAccessor:
         self.logger = getLogger("accessor")
         app.on_startup.append(self.connect)
         app.on_cleanup.append(self.disconnect)
-
+    
     async def connect(self, app: "Application"):
         return
 

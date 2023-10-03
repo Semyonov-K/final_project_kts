@@ -2,6 +2,8 @@ from aiohttp_apispec import querystring_schema, request_schema, response_schema,
 from aiohttp.web_exceptions import HTTPConflict, HTTPNotFound, HTTPBadRequest
 from aiohttp.web import HTTPForbidden, HTTPOk
 from app.stock_exchange.schemes import (
+    ChatIdSchema,
+    ChatResponseSchema,
     StockIdSchema,
     StockRequestSchema,
     StockResponseSchema
@@ -43,3 +45,19 @@ class StockGetView(AuthRequiredMixin, View):
         if stock is None:
             stock = []
         return json_response(data={"stock": StockResponseSchema().dump(stock)})
+
+
+class ChatGetView(AuthRequiredMixin, View):
+    @docs(
+            tags=["VK Stock Exchange"],
+            summary="Получить чат",
+            description="Получить чат из БД"
+    )
+    @request_schema(ChatIdSchema)
+    @response_schema(ChatResponseSchema, HTTPOk)
+    async def get(self):
+        chat_id = self.request.query.get("chat_id")
+        chat = await self.store.chatmodel.get_chat_by_chat_id(chat_id)
+        if chat is None:
+            chat = []
+        return json_response(data={"chat": StockResponseSchema().dump(chat)})

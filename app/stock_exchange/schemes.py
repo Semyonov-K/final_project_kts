@@ -13,3 +13,16 @@ class StockResponseSchema(Schema):
     stock_id = fields.Int()
     name = fields.Str()
     price = fields.Int()
+
+
+class ChatIdSchema(Schema):
+    chat_id = fields.Int(required=True)
+
+
+class ChatResponseSchema(Schema):
+    chat_id = fields.Int()
+    start_game = fields.Bool()
+    pregame = fields.Bool()
+    timer = fields.Str()
+    game = fields.Bool()
+    endgame = fields.Bool()

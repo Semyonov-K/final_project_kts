@@ -1,5 +1,6 @@
 import typing
 import asyncio
+import time
 from typing import Optional
 from logging import getLogger
 
@@ -37,15 +38,25 @@ class BotManager:
                 peer_id = update.event_object.event_message.peer_id
             if isinstance(update, Update):
                 peer_id = update.object.message.peer_id
-            chat = await CMA.get_chat_by_chat_id(CMA, chat_id=peer_id)
+            chat = await CMA.get_chat_by_chat_id(self, chat_id=peer_id)
             if chat:
                 await self.handler_lock(chat=chat, updates=updates)
             if chat is None:
-                new_chat = await CMA.create_chat(chat_id=peer_id)
+                new_chat = await CMA.create_chat(self, chat_id=peer_id)
                 await self.handler_lock(chat=new_chat, updates=updates)
 
 
     async def handler_lock(self, chat: Chat, updates: list[Update]):
+        await self.start_menu(chat, updates)
+        if chat.pregame is True:
+            game = await SEA.get_game(self, chat_id=chat.chat_id)
+            if game is None:
+                game = await SEA.create_game(
+                    self,
+                    chat_id=chat.chat_id
+                )
+            await self.prepare_stocks(game)
+            await self.prepare_players(game, updates)
         if chat.endgame is True:
             await self.endgame(chat, updates)
         if chat.game is True and chat.timer == "roundend":
@@ -58,27 +69,25 @@ class BotManager:
             chat.timer = None
             chat.pregame = False
             chat.game = True
-            await CMA.update_chat_in_db(chat)
-        if chat.pregame is True:
-            game = SEA.get_game(chat_id=chat.chat_id)
-            if game is None:
-                game = SEA.create_game(
-                    chat_id=chat.chat_id
-                )
-            await self.prepare_stocks(game)
-            await self.prepare_players(game, updates)
-        await self.start_menu(chat, updates)
+            await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
+
 
 
     async def start_timer(self, chat: Chat, timer: int):
-        await asyncio.sleep(timer)
+        start_time = time.time()
+    
+        while True:
+            elapsed_time = time.time() - start_time
+            if elapsed_time >= timer:
+                break
+            await asyncio.sleep(1)
         if timer >= TIME_OF_BIG_TIMER:
             chat.timer = "done"
             text_msg = "Время закончилось! Идет формирование списка игроков."
         else:
             chat.timer = "roundend"
             text_msg = "Сессия закончилась! На рынке идут подсчёты."
-        await CMA.update_chat_in_db(chat)
+        await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
         if timer >= TIME_OF_BIG_TIMER:
             await self.sendler(chat.chat_id, chat.chat_id, text_msg, BUTTON_IN_GAME)
         else:
@@ -106,7 +115,7 @@ class BotManager:
                 peer_id = update.event_object.event_message.peer_id
                 user_id = update.event_object.event_message.user_id
                 event_id = update.event_object.event_message.event_id
-                user = await SEA.get_user_by_vk_id(vk_id=user_id)
+                user = await SEA.get_user_by_vk_id(self, vk_id=user_id)
                 if payload["command"] == "stock_one":
                     SHOWBAR_STOCK = SHOWBAR_COUNT_STOCK
                     SHOWBAR_STOCK.replace("У вас 0 акции!", f"У вас {user.stock_one} акции")
@@ -135,9 +144,9 @@ class BotManager:
                                 event_data=SHOWBAR_STOCK
                             )
                 if payload["command"] == "endgame":
-                    await SEA.delete_game(chat_id=chat.chat_id)
+                    await SEA.delete_game(self, chat_id=chat.chat_id)
                     text_msg=f"Игра закончена по просьбе @{user_id}"
-                    keyboard = HIDDEN_KEYBOARD
+                    keyboard = 'false'
                     await self.sendler(peer_id, from_id, text_msg, keyboard)
                 continue
 
@@ -149,7 +158,7 @@ class BotManager:
                 if chat.start_game is False:
                     text_msg="Здравствуйте, давайте поиграем?"
                     keyboard = BUTTON
-                    await self.sendler(peer_id, user_id, text_msg, keyboard)
+                    await self.sendler(peer_id, peer_id, text_msg, keyboard)
 
             if text == "[club222363225|@club222363225] Правила игры":
                 text_msg=RULES_OF_GAME
@@ -177,19 +186,19 @@ class BotManager:
                 if chat.start_game is False:
                     chat.start_game = True
                     chat.pregame = True
-                    new_chat = await CMA.update_chat_in_db(chat)
+                    new_chat = await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
                     text_msg=START_GAME
                     await self.sendler(peer_id, from_id, text_msg, BUTTON_PREGAME)
-                    await asyncio.create_task(self.start_timer(new_chat, TIME_OF_BIG_TIMER))
+                    await self.start_timer(new_chat, TIME_OF_BIG_TIMER)
 
 
     async def prepare_stocks(self, new_game: Game):
         if len(new_game.stocks) >= 3:
             return
         for stock_id in range(3):
-            stock = await SEA.get_stock(stock_id)
-            new_stock = await SEA.create_stock(name=stock.name, price=stock.price)
-            await SEA.update_game(chat_id=new_game.chat_id, stock=new_stock)
+            stock = await SEA.get_stock(self, stock_id)
+            new_stock = await SEA.create_stock(self, name=stock.name, price=stock.price)
+            await SEA.update_game(self, chat_id=new_game.chat_id, stock=new_stock)
 
 
     async def prepare_players(self, new_game: Game, updates: list[Update]):
@@ -209,8 +218,8 @@ class BotManager:
                                 event_data=SHOWBAR_ALREADY_ADD
                             )
                     else:
-                        new_user = await SEA.create_user(vk_id=user_id)
-                        await SEA.update_game(chat_id=new_game.chat_id, user=new_user)
+                        new_user = await SEA.create_user(self, vk_id=user_id)
+                        await SEA.update_game(self, chat_id=new_game.chat_id, user=new_user)
                         await self.app.store.vk_api.send_event_message(
                             event_id=event_id,
                             peer_id=peer_id,
@@ -223,21 +232,26 @@ class BotManager:
         await self.sendler(
                 peer_id=chat.chat_id,
                 from_id=chat.chat_id,
-                text_msg=text_msg,
-                keyboard=HIDDEN_KEYBOARD
+                text=text_msg,
+                keyboard='false'
         )
         chat.start_game = False
         chat.pregame = False
         chat.timer = None
         chat.game = False
         await CMA.update_chat_in_db(
+            self,
             chat_id=chat.chat_id,
             new_chat=chat
         )
 
 
     async def stock_exchange(self, chat: Chat, updates: list[Update]):
-        game = await SEA.get_game(chat_id=chat.chat_id)
+        game = await SEA.get_game(self, chat_id=chat.chat_id)
+        if game is None:
+            text_msg = "Что-то пошло не так :()"
+            await self.prefinal_message(chat=chat, text_msg=text_msg)
+            return
         if len(game.users) < 2 and game.number_of_moves == 1:
             text_msg = "К сожалению, игра не состоится. Недостаточное количество игроков (минимум: 2)"
             await self.prefinal_message(chat=chat, text_msg=text_msg)
@@ -280,7 +294,7 @@ class BotManager:
             text=text_msg,
             keyboard=BUTTON_PROCESS)
         chat.timer = "round"
-        await CMA.update_chat_in_db(chat_id=chat.chat_id, new_chat=chat)
+        await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
         await asyncio.create_task(self.start_timer(chat, TIME_OF_GAME))
 
 
@@ -298,13 +312,14 @@ class BotManager:
 
     async def check_buy(self, game: Game, stock_number: int, vk_id: int, event_id: int, peer_id: int):
         stock = game.stocks[stock_number].price
-        user = await SEA.get_user_by_vk_id(vk_id=vk_id)
+        user = await SEA.get_user_by_vk_id(self, vk_id=vk_id)
         result_buy = user.score - stock.price
         if result_buy >= 0:
             if stock_number == 0:
                 stock_one=user.stock_one + 1
                 stock_one_buy=user.stock_one_buy + 1
                 await SEA.update_user(
+                    self,
                     vk_id=vk_id,
                     score=result_buy,
                     stock_one=stock_one,
@@ -314,6 +329,7 @@ class BotManager:
                 stock_two=user.stock_two + 1,
                 stock_two_buy=user.stock_two_buy + 1
                 await SEA.update_user(
+                    self,
                     vk_id=vk_id,
                     score=result_buy,
                     stock_two=stock_two,
@@ -323,6 +339,7 @@ class BotManager:
                 stock_three=user.stock_three + 1,
                 stock_three_buy=user.stock_three_buy + 1
                 await SEA.update_user(
+                    self,
                     vk_id=vk_id,
                     score=result_buy,
                     stock_three=stock_three,
@@ -339,25 +356,25 @@ class BotManager:
 
     async def check_sell(self, game: Game, stock_number: int, vk_id: int, event_id: int, peer_id: int):
         stock = game.stocks[stock_number].price
-        user = await SEA.get_user_by_vk_id(vk_id=vk_id)
+        user = await SEA.get_user_by_vk_id(self, vk_id=vk_id)
         if stock_number == 0:
             check_stock = user.stock_one
             if check_stock > 0:
                 all_stock_one = user.stock_one - 1
                 new_stock_sell_one = user.stock_one_sell + 1
-                await SEA.update_user(vk_id, stock_one=all_stock_one, stock_one_sell=new_stock_sell_one)
+                await SEA.update_user(self, vk_id, stock_one=all_stock_one, stock_one_sell=new_stock_sell_one)
         if stock_number == 1:
             check_stock = user.stock_two
             if check_stock > 0:
                 all_stock_two = user.stock_two - 1
                 new_stock_sell_two = user.stock_two_sell + 1
-                await SEA.update_user(vk_id, stock_two=all_stock_two, stock_two_sell=new_stock_sell_two)
+                await SEA.update_user(self, vk_id, stock_two=all_stock_two, stock_two_sell=new_stock_sell_two)
         if stock_number == 2:
             check_stock = user.stock_three
             if check_stock > 0:
                 all_stock_three = user.stock_three - 1
                 new_stock_sell_three = user.stock_three_sell + 1
-                await SEA.update_user(vk_id, stock_three=all_stock_three, stock_three_sell=new_stock_sell_three)
+                await SEA.update_user(self, vk_id, stock_three=all_stock_three, stock_three_sell=new_stock_sell_three)
 
         if check_stock == 0:
             await self.app.store.vk_api.send_event_message(
@@ -370,7 +387,7 @@ class BotManager:
 
     async def update_stock_exchange(self, chat: Chat, updates:list[Update]):
         for update in updates:
-            game = await SEA.get_game(chat_id=chat.chat_id)
+            game = await SEA.get_game(self, chat_id=chat.chat_id)
             if game.game_id not in in_memory_for_skipped:
                 in_memory_for_skipped[game.game_id] = []
             if len(game.users) == len(in_memory_for_skipped[game.game_id]):
@@ -440,7 +457,7 @@ class BotManager:
     
 
     async def handler_round(self, chat: Chat, updates: list[Update]):
-        game = await SEA.get_game(chat_id=chat.chat_id)
+        game = await SEA.get_game(self, chat_id=chat.chat_id)
         nom = game.number_of_moves + 1
         transactions_stock_one = 0
         transactions_stock_two = 0
@@ -453,6 +470,7 @@ class BotManager:
             transactions_stock_three += user.stock_three_buy
             transactions_stock_three -= user.stock_three_sell
             await SEA.update_user(
+                self,
                 vk_id=user.vk_id,
                 stock_one_buy=0,
                 stock_one_sell=0,
@@ -466,23 +484,23 @@ class BotManager:
         minran = -25 + transactions_stock_one
         maxran = 25 + transactions_stock_one
         done_new_price_one = await calculate_price_change(new_price_one, minran, maxran)
-        await SEA.update_stock(game.stocks[0], done_new_price_one)
+        await SEA.update_stock(self, game.stocks[0], done_new_price_one)
         new_price_two = game.stocks[1].price + transactions_stock_two * 0.01
         minran = -25 + transactions_stock_two
         maxran = 25 + transactions_stock_two
         done_new_price_two = await calculate_price_change(new_price_two, minran, maxran)
-        await SEA.update_stock(game.stocks[1], done_new_price_two)
+        await SEA.update_stock(self, game.stocks[1], done_new_price_two)
         new_price_three = game.stocks[2].price + transactions_stock_three * 0.01
         minran = -25 + transactions_stock_two
         maxran = 25 + transactions_stock_three
         done_new_price_three = await calculate_price_change(new_price_three, minran, maxran)
-        await SEA.update_stock(game.stocks[2], done_new_price_three)
-        await SEA.update_game(chat_id=chat.chat_id, number_of_moves=nom)
+        await SEA.update_stock(self, game.stocks[2], done_new_price_three)
+        await SEA.update_game(self, chat_id=chat.chat_id, number_of_moves=nom)
         chat.timer = None
-        await CMA.update_chat_in_db(chat_id=chat.chat_id, new_chat=chat)
+        await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
 
     async def endgame(self, chat: Chat, updates: list[Update]):
-        game = await SEA.get_game(chat_id=chat.chat_id)
+        game = await SEA.get_game(self, chat_id=chat.chat_id)
         win_score = 0
         win_user = 0
         for user in game.users:
@@ -497,16 +515,17 @@ class BotManager:
                 keyboard=BUTTON_IN_GAME
         )
         for user in game.users:
-            gamescore = await SEA.get_gamescore_user_by_vk_id(user.vk_id)
+            gamescore = await SEA.get_gamescore_user_by_vk_id(self, user.vk_id)
             if gamescore is None:
-                gamescore = await SEA.create_gamescore_user_by_vk_id(user.vk_id)
-            fin_user = await SEA.get_user_by_vk_id(user.vk_id)
+                gamescore = await SEA.create_gamescore_user_by_vk_id(self, user.vk_id)
+            fin_user = await SEA.get_user_by_vk_id(self, user.vk_id)
             new_total_score = gamescore.total_score + fin_user.score
             new_total_games = gamescore.total_games + 1
             new_total_win = gamescore.total_win
             if user.vk_id == win_user:
                 new_total_win = gamescore.total_win + 1
             await SEA.update_gamescore(
+                self,
                 vk_id=user.vk_id,
                 total_score=new_total_score,
                 total_games=new_total_games,
@@ -525,12 +544,12 @@ class BotManager:
                 peer_id=chat.chat_id,
                 from_id=chat.chat_id,
                 text=text_msg,
-                keyboard=HIDDEN_KEYBOARD
+                keyboard='false'
         )
-        await SEA.delete_game(chat_id=chat.chat_id)
+        await SEA.delete_game(self, chat_id=chat.chat_id)
         chat.start_game = False
         chat.pregame = False
         chat.timer = 'None'
         chat.game = False
         chat.endgame = False
-        await CMA.update_chat_in_db(chat_id=chat.chat_id, new_chat=chat)
+        await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
