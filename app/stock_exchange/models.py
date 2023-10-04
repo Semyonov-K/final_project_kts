@@ -35,6 +35,7 @@ class UserModel(db):
     stock_two_sell = Column(Integer, default=0)
     stock_three_sell = Column(Integer, default=0)
     game_user_id = Column(BigInteger, ForeignKey("game.game_id", ondelete="CASCADE"))
+    game_user = relationship("GameModel")
 
     def get_object(self) -> User:
         return User(
@@ -64,7 +65,7 @@ class GameScore:
 class GameScoreModel(db):
     __tablename__ = 'game_score'
 
-    score_id = Column(Integer, primary_key=True)
+    score_id = Column(Integer, primary_key=True, autoincrement=True )
     vk_id = Column(Integer)
     total_score = Column(Integer, default=0)
     total_games = Column(Integer, default=0)
@@ -91,10 +92,11 @@ class Stock:
 class StockModel(db):
     __tablename__ = "stock"
 
-    stock_id = Column(Integer, primary_key=True)
+    stock_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20))
     price = Column(Integer, default=1000)
     game_stock_id = Column(BigInteger, ForeignKey("game.game_id", ondelete="CASCADE"))
+    game_stock = relationship("GameModel")
 
     def get_object(self) -> Stock:
         return Stock(
@@ -116,7 +118,7 @@ class Game:
 class GameModel(db):
     __tablename__ = "game"
 
-    game_id = Column(Integer, primary_key=True)
+    game_id = Column(Integer, primary_key=True, autoincrement=True)
     chat_id = Column(Integer)
     users = relationship("UserModel")
     stocks = relationship("StockModel")
@@ -126,7 +128,7 @@ class GameModel(db):
         return Game(
             game_id=self.game_id,
             chat_id=self.chat_id,
-            users=[user.get_object() for user in self.users],
-            stocks=[stock.get_object() for stock in self.stocks],
+            users=self.users,
+            stocks=self.stocks,
             number_of_moves=self.number_of_moves,
         )

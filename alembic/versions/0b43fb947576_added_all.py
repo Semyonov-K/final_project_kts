@@ -1,8 +1,8 @@
 """added all
 
-Revision ID: 782a53a0edbd
+Revision ID: 0b43fb947576
 Revises: 
-Create Date: 2023-10-03 03:05:43.482582
+Create Date: 2023-10-04 14:55:43.887698
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '782a53a0edbd'
+revision: str = '0b43fb947576'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -29,21 +29,22 @@ def upgrade() -> None:
     )
     op.create_table('chat',
     sa.Column('chat_id', sa.Integer(), nullable=False),
-    sa.Column('start_game', sa.Boolean(), nullable=True),
+    sa.Column('start_bot', sa.Boolean(), nullable=True),
     sa.Column('pregame', sa.Boolean(), nullable=True),
+    sa.Column('prepare_players', sa.Boolean(), nullable=True),
     sa.Column('timer', sa.String(), nullable=True),
     sa.Column('game', sa.Boolean(), nullable=True),
     sa.Column('endgame', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('chat_id')
     )
     op.create_table('game',
-    sa.Column('game_id', sa.Integer(), nullable=False),
+    sa.Column('game_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('chat_id', sa.Integer(), nullable=True),
     sa.Column('number_of_moves', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('game_id')
     )
     op.create_table('game_score',
-    sa.Column('score_id', sa.Integer(), nullable=False),
+    sa.Column('score_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('vk_id', sa.Integer(), nullable=True),
     sa.Column('total_score', sa.Integer(), nullable=True),
     sa.Column('total_games', sa.Integer(), nullable=True),
@@ -51,7 +52,7 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('score_id')
     )
     op.create_table('stock',
-    sa.Column('stock_id', sa.Integer(), nullable=False),
+    sa.Column('stock_id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.String(length=20), nullable=True),
     sa.Column('price', sa.Integer(), nullable=True),
     sa.Column('game_stock_id', sa.BigInteger(), nullable=True),

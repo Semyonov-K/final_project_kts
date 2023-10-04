@@ -8,8 +8,9 @@ from sqlalchemy.orm import relationship
 @dataclass
 class Chat:
     chat_id: int
-    start_game: bool
+    start_bot: bool
     pregame: bool
+    prepare_players: bool
     timer: str
     game: bool
     endgame: bool
@@ -19,8 +20,9 @@ class ChatModel(db):
     __tablename__ = 'chat'
 
     chat_id = Column(Integer, primary_key=True)
-    start_game = Column(Boolean, default=False)
+    start_bot = Column(Boolean, default=False)
     pregame = Column(Boolean, default=False)
+    prepare_players = Column(Boolean, default=False)
     timer = Column(String, default='None')
     game = Column(Boolean, default=False)
     endgame = Column(Boolean, default=False)
@@ -28,8 +30,9 @@ class ChatModel(db):
     def get_object(self) -> Chat:
         return Chat(
             chat_id=self.chat_id,
-            start_game=self.start_game,
+            start_bot=self.start_bot,
             pregame=self.pregame,
+            prepare_players=self.prepare_players,
             timer=self.timer,
             game=self.game,
             endgame=self.endgame

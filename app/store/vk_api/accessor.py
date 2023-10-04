@@ -75,7 +75,7 @@ class VkApiAccessor(BaseAccessor):
                 params={
                     "act": "a_check",
                     "key": self.key,
-                    "wait": 30,
+                    "wait": 3,
                     "mode": 2,
                     "ts": self.ts,
                 },

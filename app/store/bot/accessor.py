@@ -31,7 +31,7 @@ class ChatModelAccessor(BaseAccessor):
             result = await session.execute(query_chat)
             chat = result.scalars().first()
             if chat:
-                chat.start_game = new_chat.start_game
+                chat.start_bot = new_chat.start_bot
                 chat.pregame = new_chat.pregame
                 chat.timer = new_chat.timer
                 chat.game = new_chat.game
