@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy import select
 
 from app.base.base_accessor import BaseAccessor
-from app.store.bot.models import ChatModel, Chat
+from app.bot.models import ChatModel, Chat
 
 
 class ChatModelAccessor(BaseAccessor):
@@ -33,6 +33,7 @@ class ChatModelAccessor(BaseAccessor):
             if chat:
                 chat.start_bot = new_chat.start_bot
                 chat.pregame = new_chat.pregame
+                chat.early_timer_ = new_chat.early_timer_
                 chat.timer = new_chat.timer
                 chat.game = new_chat.game
                 chat.endgame = new_chat.endgame
