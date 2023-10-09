@@ -82,6 +82,32 @@ class StockExchangeAccessor(BaseAccessor):
             else:
                 return None
 
+    async def set_null_stock(
+            self, 
+            vk_id: int,             
+            score: Optional[bool]=False,
+            stock_one: Optional[bool]=False,
+            stock_two: Optional[bool]=False,
+            stock_three: Optional[bool]=False,
+        ) -> Optional[User]:
+        async with self.app.database.session() as session:
+            query_user = select(UserModel).where(UserModel.vk_id==vk_id)
+            result = await session.execute(query_user)
+            user = result.scalars().first()
+            if user:
+                if score is True:
+                    user.score = 0
+                if stock_one is True:
+                    user.stock_one = 0
+                if stock_two is True:
+                    user.stock_two = 0
+                if stock_three is True:
+                    user.stock_three = 0
+                await session.commit()
+                return user.get_object()
+            else:
+                return None
+
     async def delete_user(self, vk_id: int) -> None:
         async with self.app.database.session() as session:
             query_user = select(UserModel).where(UserModel.vk_id==vk_id)

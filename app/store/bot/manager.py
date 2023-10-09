@@ -20,8 +20,8 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 # BIG TIMER и GAME ДОЛЖНЫ ОТЛИЧАТЬСЯ!
-TIME_OF_BIG_TIMER = 15
-TIME_OF_GAME = 30
+TIME_OF_BIG_TIMER = 10
+TIME_OF_GAME = 5
 in_memory_for_skipped = {}
 
 
@@ -74,14 +74,11 @@ class BotManager:
         if timer == TIME_OF_GAME:
             chat = await CMA.get_chat_by_chat_id(self, chat_id=chat.chat_id)
             if chat.early_timer_ > 0 or chat.endgame is True:
-                print("DADADDDDDDDDDDDDDDDDDADADADADADADADDDDDDDDDDDDDDDDDDDADA")
                 chat.early_timer_ -= 1
                 await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
                 return
             chat.timer = "roundend"
             await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
-            text_msg = "Раунд закончен!"
-            await self.sendler(chat.chat_id, chat.chat_id, text_msg, BUTTON_IN_GAME_WITH_STOCKS)
         if timer == TIME_OF_BIG_TIMER:
             chat.game = True
             await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
@@ -115,7 +112,6 @@ class BotManager:
                 user = await SEA.get_user_by_vk_id(self, vk_id=user_id)
                 if payload["command"] == "iplay":
                     game = await SEA.get_game(self, chat_id=chat.chat_id)
-                    print(f'----------------------------{game}')
                     if game is None:
                         game = await SEA.create_game(
                             self,
@@ -126,12 +122,9 @@ class BotManager:
                             new_stock = await SEA.create_stock(self, name=stock.name, price=stock.price)
                             await SEA.update_game(self, chat_id=chat.chat_id, stock=new_stock, user=None, number_of_moves=None)
                     lst_user = []
-                    print(f'----------------------------{lst_user}')
                     for suser in game.users:
                         lst_user.append(suser.vk_id)
-                    print(f'----------------------------{lst_user}')
                     if user_id in lst_user:
-                            print(f'----------------------------if {lst_user}')
                             await self.app.store.vk_api.send_event_message(
                                 event_id=event_id,
                                 peer_id=peer_id,
@@ -139,7 +132,6 @@ class BotManager:
                                 event_data=SHOWBAR_ALREADY_ADD
                             )
                     else:
-                        print(f'----------------------------else {lst_user}')
                         if user is None:
                             user = await SEA.create_user(self, vk_id=user_id)
                         await SEA.update_game(self, chat_id=game.chat_id, user=user, stock=None, number_of_moves=None)
@@ -363,6 +355,8 @@ class BotManager:
                     stock_one=stock_one,
                     stock_one_buy=stock_one_buy
                 )
+                if result_buy == 0:
+                    await SEA.set_null_stock(self, vk_id, score=True)
             if stock_number == 1:
                 stock_two=user.stock_two + 1
                 stock_two_buy=user.stock_two_buy + 1
@@ -373,6 +367,8 @@ class BotManager:
                     stock_two=stock_two,
                     stock_two_buy=stock_two_buy
                 )
+                if result_buy == 0:
+                    await SEA.set_null_stock(self, vk_id, score=True)
             if stock_number == 2:
                 stock_three=user.stock_three + 1
                 stock_three_buy=user.stock_three_buy + 1
@@ -383,6 +379,8 @@ class BotManager:
                     stock_three=stock_three,
                     stock_three_buy=stock_three_buy
                 )
+                if result_buy == 0:
+                    await SEA.set_null_stock(self, vk_id, score=True)
         else:
             await self.app.store.vk_api.send_event_message(
                 event_id=event_id,
@@ -395,35 +393,36 @@ class BotManager:
     async def check_sell(self, game: Game, stock_number: int, vk_id: int, event_id: int, peer_id: int):
         """Проверка, что игрок может продать акцию."""
         stock = game.stocks[stock_number].price
-        print(stock)
         user = await SEA.get_user_by_vk_id(self, vk_id=vk_id)
-        print(user)
         if stock_number == 0:
             check_stock = user.stock_one
-            print(check_stock)
             if check_stock > 0:
                 new_score = user.score + stock
-                print(new_score)
-                all_stock_one = user.stock_one - 1
-                print(all_stock_one)
+                all_stock_one = check_stock - 1
+                if all_stock_one == 0:
+                    await SEA.set_null_stock(self, vk_id, stock_one=True)
                 new_stock_sell_one = user.stock_one_sell + 1
-                print(new_stock_sell_one)
-                await SEA.update_user(self, vk_id, score=new_score, stock_one=all_stock_one, stock_one_sell=new_stock_sell_one)
+                await SEA.update_user(self, vk_id, score=new_score, stock_one=int(all_stock_one), stock_one_sell=new_stock_sell_one)
+                user = await SEA.get_user_by_vk_id(self, vk_id=vk_id)        
+        user = await SEA.get_user_by_vk_id(self, vk_id=vk_id)
         if stock_number == 1:
             check_stock = user.stock_two
             if check_stock > 0:
                 new_score = user.score + stock
-                all_stock_two = user.stock_two - 1
+                all_stock_two = check_stock - 1
+                if all_stock_two == 0:
+                    await SEA.set_null_stock(self, vk_id, stock_two=True)
                 new_stock_sell_two = user.stock_two_sell + 1
                 await SEA.update_user(self, vk_id, score=new_score, stock_two=all_stock_two, stock_two_sell=new_stock_sell_two)
         if stock_number == 2:
             check_stock = user.stock_three
             if check_stock > 0:
                 new_score = user.score + stock
-                all_stock_three = user.stock_three - 1
+                all_stock_three = check_stock - 1
+                if all_stock_three == 0:
+                    await SEA.set_null_stock(self, vk_id, stock_three=True)
                 new_stock_sell_three = user.stock_three_sell + 1
                 await SEA.update_user(self, vk_id, score=new_score, stock_three=all_stock_three, stock_three_sell=new_stock_sell_three)
-
         if check_stock == 0:
             await self.app.store.vk_api.send_event_message(
                 event_id=event_id,
@@ -443,14 +442,10 @@ class BotManager:
                 text_msg = "Все игроки проголосовали за конец сессии! Идет завершение сессии."
                 await self.sendler(chat.chat_id, chat.chat_id, text_msg, BUTTON_IN_GAME_WITH_STOCKS)
                 in_memory_for_skipped.clear()
-                print(f"22222222222222222222222222222222 - {chat}")
                 x = await CMA.get_chat_by_chat_id(self, chat_id=chat.chat_id)
-                print(f"3333333333333333333333333333333 - {x}")
                 chat.timer = "roundend"
                 chat.early_timer_ += 1
-                print(f"======================================{chat.early_timer_}")
                 x = await CMA.update_chat_in_db(self, chat_id=chat.chat_id, new_chat=chat)
-                print(f"888888888888888888888888888888---===={x}")
                 continue
             if isinstance(update, UpdateEvent):
                 payload = update.event_object.event_message.payload
@@ -601,7 +596,7 @@ class BotManager:
     async def endgame(self, chat: Chat, updates: list[Update]):
         """Корутина, отвечающая за конец игры. Подводит статистику,
         удаляет законченную игру."""
-        await asyncio.sleep(TIME_OF_GAME)
+        await asyncio.sleep(5)
         game = await SEA.get_game(self, chat_id=chat.chat_id)
         win_score = 0
         win_user = 0
